@@ -58,102 +58,90 @@ TEST_CASE("SkipList Invariants",
 	}
 }
 
-//TEST_CASE("SkipList Insertions",
-//	"[member functions]")
-//{
-//	SECTION("Insert one item.")
-//	{
-//		SkipList testList = SkipList();
-//		testList.insert(0);
-//		std::shared_ptr<SkipListNode> result = testList.find(0);
-//		{
-//			INFO("List has item in it.");
-//			REQUIRE(result);
-//		}
-//		{
-//			INFO("Head is linked to item.");
-//			REQUIRE(testList._head->_right == result);
-//		}
-//		{
-//			INFO("Item is linked to tail.");
-//			REQUIRE(result->_right == testList._tail);
-//		}
-//		{
-//			INFO("Tail is back-linked to item.");
-//			REQUIRE(testList._tail->_left == result);
-//		}
-//		{
-//			INFO("Item is linked to head.");
-//			REQUIRE(result->_left == testList._head);
-//		}
-//		{
-//			INFO("List does NOT have item not inserted.");
-//			REQUIRE(!(testList.find(1)));
-//		}
-//	}
-//
-//	SECTION("Insert 10 items.")
-//	{
-//		SkipList testList = SkipList();
-//		// Populate data
-//		std::vector<int> testInts = {0, -37, 42, 178, 91, -9999, 777, 9999, 3, 400};
-//		for (auto i : testInts)
-//			testList.insert(i);
-//		std::sort(testInts.begin(), testInts.end());
-//
-//		std::vector<int> resultInts;
-//		std::shared_ptr<SkipListNode> node = testList._head;
-//		while (node->_down)
-//			node = node->_down;
-//		node = node->_right;
-//		while (node->_value != testList._tail->_value)
-//		{
-//			resultInts.push_back(node->_value);
-//			node = node->_right;
-//		}
-//		{
-//			INFO("All items were inserted.");
-//			REQUIRE(resultInts.size() == testInts.size());
-//		}
-//		{
-//			INFO("Items are sorted.");
-//			REQUIRE(resultInts == testInts);
-//		}
-//	}
-//
-//	SECTION("Insert 1000 items.")
-//	{
-//		SkipList testList = SkipList();
-//		std::vector<int> testInts(1000);
-//		std::vector<int> resultInts;
-//		
-//		// Generate 1000 random vectors across the entire range of possible ints
-//		std::generate(testInts.begin(), testInts.end(), randomNumber);
-//
-//		// Populate skip list
-//		for (auto i : testInts)
-//			testList.insert(i);
-//		
-//		// Check for sorting
-//		std::sort(testInts.begin(), testInts.end());
-//		
-//		// Retrieve results
-//		std::shared_ptr<SkipListNode> node = testList._head;
-//		while (node->_down)
-//			node = node->_down;
-//		node = node->_right;
-//		while (node->_value != testList._tail->_value)
-//		{
-//			resultInts.push_back(node->_value);
-//			node = node->_right;
-//		}
-//		{
-//			INFO("All items were inserted.");
-//			REQUIRE(resultInts.size() == testInts.size());
-//		}
-//		{
-//			INFO("Items are sorted.");
-//			REQUIRE(resultInts == testInts);
-//		}
-//	}
-//}
+TEST_CASE("SkipList Insertions",
+	"[member functions]")
+{
+	SECTION("Insert one item.")
+	{
+		SkipList testList = SkipList();
+		testList.insert(0);
+		std::shared_ptr<SkipListNode> result = testList.search(0);
+		{
+			INFO("List has item in it.");
+			REQUIRE(result);
+		}
+		{
+			INFO("Head is linked to item.");
+			REQUIRE(testList._head->_forwardNodes[0] == result);
+		}
+		{
+			INFO("Item is linked to tail.");
+			REQUIRE(result->_forwardNodes[0] == testList._tail);
+		}
+		{
+			INFO("List does NOT have item not inserted.");
+			REQUIRE(!(testList.search(1)));
+		}
+	}
+
+	SECTION("Insert 10 items.")
+	{
+		SkipList testList = SkipList();
+		// Populate data
+		std::vector<int> testInts = {0, -37, 42, 178, 91, -9999, 777, 9999, 3, 400};
+		for (auto i : testInts)
+			testList.insert(i);
+		std::sort(testInts.begin(), testInts.end());
+
+		std::vector<int> resultInts;
+		std::shared_ptr<SkipListNode> node = testList._head;
+		node = node->_forwardNodes[0];
+		while (node->_value != testList._tail->_value)
+		{
+			resultInts.push_back(node->_value);
+			node = node->_forwardNodes[0];
+		}
+		{
+			INFO("All items were inserted.");
+			REQUIRE(resultInts.size() == testInts.size());
+		}
+		{
+			INFO("Items are sorted.");
+			REQUIRE(resultInts == testInts);
+		}
+	}
+
+	//SECTION("Insert 1000 items.")
+	//{
+	//	SkipList testList = SkipList();
+	//	std::vector<int> testInts(1000);
+	//	std::vector<int> resultInts;
+	//	
+	//	// Generate 1000 random vectors across the entire range of possible ints
+	//	std::generate(testInts.begin(), testInts.end(), randomNumber);
+
+	//	// Populate skip list
+	//	for (auto i : testInts)
+	//		testList.insert(i);
+	//	
+	//	// Check for sorting
+	//	std::sort(testInts.begin(), testInts.end());
+	//	
+	//	// Retrieve results
+	//	std::shared_ptr<SkipListNode> node = testList._head;
+	//	node = node->_forwardNodes[0];
+	//	while (node->_value != testList._tail->_value)
+	//	{
+	//		resultInts.push_back(node->_value);
+	//		node = node->_forwardNodes[0];
+	//	}
+	//	{
+	//		INFO("All items were inserted.");
+	//		REQUIRE(resultInts.size() == testInts.size());
+	//	}
+	//	{
+	//		INFO("Items are sorted.");
+	//		REQUIRE(resultInts == testInts);
+	//	}
+	//}
+}

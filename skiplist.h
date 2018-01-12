@@ -12,8 +12,8 @@
 
 #include <memory>	// for std::shared_ptr, std::make_shared
 #include <limits>	// for std::numeric_limits
-#include <random>	// for std::minstd_rand
-#include <iostream>		// for std::cout
+#include <random>	// for std::minstd_rand, std::uniform_real_distribution
+#include <iostream> // DEBUG
 
 // Global Variables
 const double proportion = 0.25;	// Each level has this proportion of nodes relative to lower level
@@ -55,8 +55,9 @@ double randomDouble()
 {
 	std::random_device seed;
 	std::minstd_rand generator(seed());
-	std::uniform_real_distribution<double> random(0.00, 1.00);
-	return random(generator);
+	std::uniform_real_distribution<double> random(0.0, 1.0);
+	double result = random(generator);
+	return result;
 }
 
 // int randomLevel()
@@ -95,6 +96,46 @@ public:
 
 	// Destructor
 	~SkipList() = default;
+
+// ***** SkipList: Public Member Functions *****
+public:
+	// search
+	// Looks for an item and returns a const sharedptr if it is found, nullptr otherwise
+	const std::shared_ptr<SkipListNode> search(int searchValue)
+	{
+		std::shared_ptr<SkipListNode> currentNode = _head;
+		for (int i = MaxLevel - 1; i >= 0; i--) {
+			while (currentNode->_forwardNodes[i]->_value < searchValue)
+				currentNode = currentNode->_forwardNodes[i];
+		}
+		currentNode = currentNode->_forwardNodes[0];
+		if (currentNode->_value == searchValue)
+			return currentNode;
+		return nullptr;
+	}
+
+	// insert
+	// Inserts a new node into the list at the proper, sorted position
+	void insert(int insertValue)
+	{
+		// Determine which nodes at each level need to be updated
+		std::shared_ptr<SkipListNode> updateNodes[MaxLevel];
+		std::shared_ptr<SkipListNode> currentNode = _head;
+		for (int i = MaxLevel - 1; i >= 0; i--) {
+			while (currentNode->_forwardNodes[i]->_value < insertValue)
+				currentNode = currentNode->_forwardNodes[i];
+			updateNodes[i] = currentNode;
+		}
+
+		// Create a new node and link it
+		int level = randomLevel();
+		auto newNode = std::make_shared<SkipListNode>(insertValue);
+		for (int i = 0; i < level; i++)
+		{
+			newNode->_forwardNodes[i] = updateNodes[i]->_forwardNodes[i];
+			updateNodes[i]->_forwardNodes[i] = newNode;
+		}
+	}
 };
 
 #endif // #ifndef FILE_SKIPLIST_H_INCLUDED
