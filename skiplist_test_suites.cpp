@@ -1,15 +1,14 @@
 // skiplist_test_suites.cpp
 // Corey S. Gray
-// 2 Dec 2017
+// 09 Jan 2018
 //
 // For CS 311 Fall 2017
-// Tests for class Cuber: test suites
-// For Assignment 8, Exercise B
+// Tests for class SkipList
 // Uses the "Catch" unit-testing framework
 // Requires skiplist_test_main.cpp, catch.hpp, skiplist.h
 
 // Includes for code to be tested
-#include "skiplist.h"         // For class Cuber
+#include "skiplist.h"         // For class SkipList
 #include "skiplist.h"         // Double inclusion test
 
 #define CATCH_CONFIG_FAST_COMPILE
@@ -52,9 +51,11 @@ TEST_CASE("SkipList Invariants",
 			REQUIRE(testList._tail->_value == std::numeric_limits<int>::max());
 		}
 		{
-			INFO("Head is linked to tail.");
-			REQUIRE(testList._head->_forwardNodes[0] == testList._tail);
+			INFO("Head is linked to tail at every level.");
+			for (int i = 0; i < MaxLevel; i++)
+				REQUIRE(testList._head->_forwardNodes[i] == testList._tail);
 		}
+
 	}
 }
 
@@ -141,6 +142,104 @@ TEST_CASE("SkipList Insertions",
 		}
 		{
 			INFO("Items are sorted.");
+			REQUIRE(resultInts == testInts);
+		}
+	}
+}
+
+TEST_CASE("SkipList Removals",
+	"[member functions]")
+{
+	SECTION("Insert 10 items and remove 1 item.")
+	{
+		SkipList testList = SkipList();
+		// Populate data
+		std::vector<int> testInts = { 0, -37, 42, 178, 91, -9999, 777, 9999, 3, 400 };
+		for (auto i : testInts)
+			testList.insert(i);
+		std::sort(testInts.begin(), testInts.end());
+
+		testList.remove(91);
+		auto it = std::find(testInts.begin(), testInts.end(), 91);
+		if (it != testInts.end())
+			testInts.erase(it);
+
+		std::vector<int> resultInts;
+		std::shared_ptr<SkipListNode> node = testList._head;
+		node = node->_forwardNodes[0];
+		while (node->_value != testList._tail->_value)
+		{
+			resultInts.push_back(node->_value);
+			node = node->_forwardNodes[0];
+		}
+		{
+			INFO("Item 91 was successfully removed.");
+			auto result = std::find(resultInts.begin(), resultInts.end(), 91);
+			REQUIRE(result == resultInts.end());
+		}
+		{
+			INFO("The correct number of items was removed.");
+			REQUIRE(resultInts.size() == testInts.size());
+		}
+		{
+			INFO("Items are still sorted after removal.");
+			REQUIRE(resultInts == testInts);
+		}
+	}
+
+	SECTION("Insert 10 items and remove 1 item.")
+	{
+		SkipList testList = SkipList();
+		// Populate data
+		std::vector<int> testInts = { 0, -37, 42, 178, 91, -9999, 777, 9999, 3, 400 };
+		for (auto i : testInts)
+			testList.insert(i);
+		std::sort(testInts.begin(), testInts.end());
+
+		testList.remove(-37);
+		auto it = std::find(testInts.begin(), testInts.end(), -37);
+		if (it != testInts.end())
+			testInts.erase(it);
+
+		testList.remove(400);
+		auto it2 = std::find(testInts.begin(), testInts.end(), 400);
+		if (it2 != testInts.end())
+			testInts.erase(it2);
+
+		testList.remove(777);
+		auto it3 = std::find(testInts.begin(), testInts.end(), 777);
+		if (it3 != testInts.end())
+			testInts.erase(it3);
+
+		std::vector<int> resultInts;
+		std::shared_ptr<SkipListNode> node = testList._head;
+		node = node->_forwardNodes[0];
+		while (node->_value != testList._tail->_value)
+		{
+			resultInts.push_back(node->_value);
+			node = node->_forwardNodes[0];
+		}
+		{
+			INFO("Item -37 was successfully removed.");
+			auto result = std::find(resultInts.begin(), resultInts.end(), -37);
+			REQUIRE(result == resultInts.end());
+		}
+		{
+			INFO("Item 400 was successfully removed.");
+			auto result = std::find(resultInts.begin(), resultInts.end(), 400);
+			REQUIRE(result == resultInts.end());
+		}
+		{
+			INFO("Item 777 was successfully removed.");
+			auto result = std::find(resultInts.begin(), resultInts.end(), 777);
+			REQUIRE(result == resultInts.end());
+		}
+		{
+			INFO("The correct number of items was removed.");
+			REQUIRE(resultInts.size() == testInts.size());
+		}
+		{
+			INFO("Items are still sorted after removal.");
 			REQUIRE(resultInts == testInts);
 		}
 	}

@@ -136,6 +136,7 @@ public:
 				currentNode = currentNode->_forwardNodes[i];
 			updateNodes[i] = currentNode;
 		}
+		currentNode = currentNode->_forwardNodes[0];	// This line allows for updating nodes
 
 		// Create a new node and link it
 		int level = randomLevel();
@@ -144,6 +145,32 @@ public:
 		{
 			newNode->_forwardNodes[i] = updateNodes[i]->_forwardNodes[i];
 			updateNodes[i]->_forwardNodes[i] = newNode;
+		}
+	}
+
+	// remove
+	// Removes a node from the list and links its neighbors to each other
+	void remove(int removeValue)
+	{
+		// Determine which nodes at each level need to be updated
+		std::shared_ptr<SkipListNode> updateNodes[MaxLevel];
+		std::shared_ptr<SkipListNode> currentNode = _head;
+		for (int i = MaxLevel - 1; i >= 0; i--) {
+			while (currentNode->_forwardNodes[i]->_value < removeValue)
+				currentNode = currentNode->_forwardNodes[i];
+			updateNodes[i] = currentNode;
+		}
+		currentNode = currentNode->_forwardNodes[0];
+
+		if (currentNode->_value == removeValue)
+		{
+			for (int i = 0; i < MaxLevel; i++)
+			{
+				if (updateNodes[i]->_forwardNodes[i] != currentNode)
+					break;
+				updateNodes[i]->_forwardNodes[i] = currentNode->_forwardNodes[i];
+			}
+				
 		}
 	}
 };
