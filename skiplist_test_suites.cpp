@@ -111,37 +111,37 @@ TEST_CASE("SkipList Insertions",
 		}
 	}
 
-	//SECTION("Insert 1000 items.")
-	//{
-	//	SkipList testList = SkipList();
-	//	std::vector<int> testInts(1000);
-	//	std::vector<int> resultInts;
-	//	
-	//	// Generate 1000 random vectors across the entire range of possible ints
-	//	std::generate(testInts.begin(), testInts.end(), randomNumber);
+	SECTION("Insert 100,000 items.")
+	{
+		SkipList testList = SkipList();
+		std::vector<int> testInts(100000);	// 1,000,000 works but is slow
+		std::vector<int> resultInts;
+		
+		// Generate 1000 random vectors across the entire range of possible ints
+		std::generate(testInts.begin(), testInts.end(), randomNumber);
 
-	//	// Populate skip list
-	//	for (auto i : testInts)
-	//		testList.insert(i);
-	//	
-	//	// Check for sorting
-	//	std::sort(testInts.begin(), testInts.end());
-	//	
-	//	// Retrieve results
-	//	std::shared_ptr<SkipListNode> node = testList._head;
-	//	node = node->_forwardNodes[0];
-	//	while (node->_value != testList._tail->_value)
-	//	{
-	//		resultInts.push_back(node->_value);
-	//		node = node->_forwardNodes[0];
-	//	}
-	//	{
-	//		INFO("All items were inserted.");
-	//		REQUIRE(resultInts.size() == testInts.size());
-	//	}
-	//	{
-	//		INFO("Items are sorted.");
-	//		REQUIRE(resultInts == testInts);
-	//	}
-	//}
+		// Populate skip list
+		for (auto i : testInts)
+			testList.insert(i);
+		
+		// Check for sorting
+		std::sort(testInts.begin(), testInts.end());
+		
+		// Retrieve results
+		std::shared_ptr<SkipListNode> node = testList._head;
+		node = node->_forwardNodes[0];
+		while (node->_value != testList._tail->_value)
+		{
+			resultInts.push_back(node->_value);
+			node = node->_forwardNodes[0];
+		}
+		{
+			INFO("All items were inserted.");
+			REQUIRE(resultInts.size() == testInts.size());
+		}
+		{
+			INFO("Items are sorted.");
+			REQUIRE(resultInts == testInts);
+		}
+	}
 }

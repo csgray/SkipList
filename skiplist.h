@@ -13,11 +13,10 @@
 #include <memory>	// for std::shared_ptr, std::make_shared
 #include <limits>	// for std::numeric_limits
 #include <random>	// for std::minstd_rand, std::uniform_real_distribution
-#include <iostream> // DEBUG
 
 // Global Variables
 const double proportion = 0.25;	// Each level has this proportion of nodes relative to lower level
-const int MaxLevel = 16;	// MaxLevel for 2^32 nodes with a _proportion of 1/4 is log base 1/(_proportion) 2^16 is 8
+const int MaxLevel = 16;	// MaxLevel for 2^32 nodes with a _proportion of 1/4 is log base 1/(_proportion) 2^16 is 16
 
 // struct SkipListNode
 // Skip List int node. SkipListNode objects should be created with std::make_shared and owned by a std::shared_ptr.
@@ -46,7 +45,7 @@ struct SkipListNode {
 	{}
 
 	// Destructor
-	~SkipListNode() = default;
+	~SkipListNode() = default;	
 };
 
 // double random()
@@ -95,7 +94,18 @@ public:
 	}
 
 	// Destructor
-	~SkipList() = default;
+	~SkipList()
+	{
+		std::shared_ptr<SkipListNode> currentNode = _head;
+		std::shared_ptr<SkipListNode> tempNode;
+		while (currentNode->_forwardNodes[0])
+		{
+			tempNode = currentNode->_forwardNodes[0];
+			for (int i = MaxLevel - 1; i >= 0; i--)
+				currentNode->_forwardNodes[i] = nullptr;
+			currentNode = tempNode;
+		}
+	}
 
 // ***** SkipList: Public Member Functions *****
 public:
