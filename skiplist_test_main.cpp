@@ -3,8 +3,7 @@
 // 2 Dec 2017
 //
 // For CS 311 Fall 2017
-// Tests for class SkipList: main program
-// For Assignment 8, Exercise 8
+// Tests for class SkipList: main program, based on Dr. Glen Chappell's tests
 // Uses the "Catch" unit-testing framework
 // Requires skiplist_test_suites.cpp, catch.hpp, skiplist.h
 
@@ -29,12 +28,10 @@ int main(int argc, char *argv[])
 	{
 		// Run test suites
 		std::cout << "BEGIN tests for class SkipList"
-			<< " - CS 311 Assn 8, Ex B"
 			<< std::endl
 			<< std::endl;
 		catchresult = session.run();
 		std::cout << "END tests for class SkipList"
-			<< " - CS 311 Assn 8, Ex B"
 			<< std::endl
 			<< std::endl;
 	}

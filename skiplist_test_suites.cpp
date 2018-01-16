@@ -8,20 +8,29 @@
 // Requires skiplist_test_main.cpp, catch.hpp, skiplist.h
 
 // Includes for code to be tested
-#include "skiplist.h"         // For class SkipList
-#include "skiplist.h"         // Double inclusion test
+#include "skiplist.h"				// For class SkipList
+#include "skiplist.h"				// Double inclusion test
 
-#define CATCH_CONFIG_FAST_COMPILE
-// Disable some features for faster compile
-#include "catch.hpp"       // For the "Catch" unit-testing framework
+// Includes and settings for Catch framework
+#include "catch.hpp"				// For the "Catch" unit-testing framework
+#define CATCH_CONFIG_FAST_COMPILE	// Disable some features for faster compile
 
 // Additional includes for this test program
-#include <limits>		// for std::numeric_limits
-#include <vector>		// for std::vector
-#include <algorithm>	// for std::sort
-#include <random>
+#include <limits>					// for std::numeric_limits
+#include <vector>					// for std::vector
+#include <algorithm>				// for std::sort, std::generate
+#include <random>					// for std::random_device, std::minstd_rand, std::uniform_int_distribution
+#include <iostream>					// for std::cout, std::endl
+
+// *********************************************************************
+// Utility Functions
+// *********************************************************************
 
 // Random Number Generator
+// Returns a random integer between –2,147,483,648 and 2,147,483,647
+// 
+// Preconditions: None
+// No-Throw Guarantee
 int randomNumber()
 {
 	std::random_device seed;
@@ -30,28 +39,27 @@ int randomNumber()
 	return values(generator);
 }
 
-
 // *********************************************************************
 // Test Cases
 // *********************************************************************
 
-
-TEST_CASE("SkipList Invariants",
-	"[invariants]")
+TEST_CASE("SkipList Invariants", "[invariants]")
+// Tests to make sure that new SkipLists have both _head and _tail of the appropriate values
+// and that those two nodes are linked
 {
 	SECTION("New empty list.")
 	{
 		SkipList testList = SkipList();
 		{
-			INFO("Head is as close to negative infinity as possible.");
-			REQUIRE(testList._head->_value == std::numeric_limits<int>::min());
+			INFO("_head is as close to negative infinity as possible.");
+			REQUIRE(testList._head->_key == std::numeric_limits<int>::min());
 		}
 		{
-			INFO("Head is as close to positive infinity as possible.");
-			REQUIRE(testList._tail->_value == std::numeric_limits<int>::max());
+			INFO("_tail is as close to positive infinity as possible.");
+			REQUIRE(testList._tail->_key == std::numeric_limits<int>::max());
 		}
 		{
-			INFO("Head is linked to tail at every level.");
+			INFO("_head is linked to tail at every level.");
 			for (int i = 0; i < MaxLevel; i++)
 				REQUIRE(testList._head->_forwardNodes[i] == testList._tail);
 		}
@@ -59,12 +67,17 @@ TEST_CASE("SkipList Invariants",
 	}
 }
 
-TEST_CASE("SkipList Insertions",
-	"[member functions]")
+TEST_CASE("SkipList Insertions", "[member functions]")
+// Tests to make sure that insert functions insert only one node with the correct _key,
+// that nodes are in the correct order, and that old and new nodes are linked to each correctly.
 {
 	SECTION("Insert one item.")
 	{
 		SkipList testList = SkipList();
+		{
+			INFO("List does NOT have item pre-inserted. CHEATER!");
+			REQUIRE(!(testList.search(0)));
+		}
 		testList.insert(0);
 		std::shared_ptr<SkipListNode> result = testList.search(0);
 		{
@@ -72,11 +85,11 @@ TEST_CASE("SkipList Insertions",
 			REQUIRE(result);
 		}
 		{
-			INFO("Head is linked to item.");
+			INFO("_head is linked to item.");
 			REQUIRE(testList._head->_forwardNodes[0] == result);
 		}
 		{
-			INFO("Item is linked to tail.");
+			INFO("Item is linked to _tail.");
 			REQUIRE(result->_forwardNodes[0] == testList._tail);
 		}
 		{
@@ -86,20 +99,20 @@ TEST_CASE("SkipList Insertions",
 	}
 
 	SECTION("Insert 10 items.")
+	// Creates a vector of 10 ints, inserts them, sorts the original, and then
+	// compares the list to the vector to make sure items were inserted in the right order.
 	{
 		SkipList testList = SkipList();
-		// Populate data
 		std::vector<int> testInts = {0, -37, 42, 178, 91, -9999, 777, 9999, 3, 400};
 		for (auto i : testInts)
 			testList.insert(i);
 		std::sort(testInts.begin(), testInts.end());
-
 		std::vector<int> resultInts;
 		std::shared_ptr<SkipListNode> node = testList._head;
-		node = node->_forwardNodes[0];
-		while (node->_value != testList._tail->_value)
+		node = node->_forwardNodes[0];	// Don't include the _head node in the results
+		while (node->_key != testList._tail->_key)
 		{
-			resultInts.push_back(node->_value);
+			resultInts.push_back(node->_key);
 			node = node->_forwardNodes[0];
 		}
 		{
@@ -112,28 +125,26 @@ TEST_CASE("SkipList Insertions",
 		}
 	}
 
-	SECTION("Insert 100,000 items.")
+	SECTION("Insert 1,000,000 items.")
+	// Stress-tests the insertion algorithm. Improperly written lists will stack overflow.
+	// 100,000 ints is probably fine for testing, but may not be large enough for good level tests.
+	// 5,000,000 also works but is so slow that it might mask other problems.
+	// 10,000,000 ints throws bad alloc in Visual Studio 2017 regardless,
+	// which may be cause to reduce MaxLevel and further improve performance and memory usage for smaller datasets.
 	{
 		SkipList testList = SkipList();
-		std::vector<int> testInts(100000);	// 1,000,000 works but is slow
+		int testNumber = 1000000;
+		std::vector<int> testInts(testNumber);
 		std::vector<int> resultInts;
-		
-		// Generate 1000 random vectors across the entire range of possible ints
 		std::generate(testInts.begin(), testInts.end(), randomNumber);
-
-		// Populate skip list
 		for (auto i : testInts)
 			testList.insert(i);
-		
-		// Check for sorting
 		std::sort(testInts.begin(), testInts.end());
-		
-		// Retrieve results
 		std::shared_ptr<SkipListNode> node = testList._head;
 		node = node->_forwardNodes[0];
-		while (node->_value != testList._tail->_value)
+		while (node->_key != testList._tail->_key)
 		{
-			resultInts.push_back(node->_value);
+			resultInts.push_back(node->_key);
 			node = node->_forwardNodes[0];
 		}
 		{
@@ -143,17 +154,45 @@ TEST_CASE("SkipList Insertions",
 		{
 			INFO("Items are sorted.");
 			REQUIRE(resultInts == testInts);
+		}
+
+		// A node's level is determined at random, so tests for each level must use ranges.
+		// Each test checks that the number of level[i] nodes is between 96% and 104% of the expected number.
+		// Experimenting with different tolerances and levels revealed that statistical tests break down between
+		// levels 5 and 7 due to lucky rolls resulting in only a few more or fewer nodes than expected.
+		int testLevels = 4;
+		auto countNode = testList._head;
+		std::vector<int> levels(testLevels);
+		for (int i = 1; i < testLevels; i++)
+		{
+			while ((countNode->_forwardNodes[i]) &&
+				   (countNode->_forwardNodes[i] != testList._tail))
+			{
+				levels[i]++;
+				countNode = countNode->_forwardNodes[i];
+			}
+			countNode = testList._head;
+			
+			{
+				int low = (testNumber * std::pow(proportion, i)) * 0.96;	// Set low tolerance here
+				int high = (testNumber * std::pow(proportion, i)) * 1.04;	// Set high tolerance here
+				INFO("Insert creates an appropriate number of level " << i << " nodes. \n" << \
+				     "NOTE: Skip list levels are randomly generated and may fall slightly outside \n" << \
+				     "bounds by chance. Rerun the tests if you are off only by a few nodes.");
+				REQUIRE(low < levels[i]);
+				REQUIRE(levels[i] < high);
+			}
 		}
 	}
 }
 
-TEST_CASE("SkipList Removals",
-	"[member functions]")
+TEST_CASE("SkipList Removals", "[member functions]")
+// Tests to make sure that the remove function actually removes items, only removes what it is supposed to remove,
+// and does not remove _head or _tail as that would break the list.
 {
-	SECTION("Insert 10 items and remove 1 item.")
+	SECTION("Insert ten items and remove one item.")
 	{
 		SkipList testList = SkipList();
-		// Populate data
 		std::vector<int> testInts = { 0, -37, 42, 178, 91, -9999, 777, 9999, 3, 400 };
 		for (auto i : testInts)
 			testList.insert(i);
@@ -167,9 +206,9 @@ TEST_CASE("SkipList Removals",
 		std::vector<int> resultInts;
 		std::shared_ptr<SkipListNode> node = testList._head;
 		node = node->_forwardNodes[0];
-		while (node->_value != testList._tail->_value)
+		while (node->_key != testList._tail->_key)
 		{
-			resultInts.push_back(node->_value);
+			resultInts.push_back(node->_key);
 			node = node->_forwardNodes[0];
 		}
 		{
@@ -187,10 +226,9 @@ TEST_CASE("SkipList Removals",
 		}
 	}
 
-	SECTION("Insert 10 items and remove 1 item.")
+	SECTION("Insert ten items and remove three items.")
 	{
 		SkipList testList = SkipList();
-		// Populate data
 		std::vector<int> testInts = { 0, -37, 42, 178, 91, -9999, 777, 9999, 3, 400 };
 		for (auto i : testInts)
 			testList.insert(i);
@@ -211,12 +249,15 @@ TEST_CASE("SkipList Removals",
 		if (it3 != testInts.end())
 			testInts.erase(it3);
 
+		// This should have no effect as 300 was never inserted.
+		testList.remove(300);
+
 		std::vector<int> resultInts;
 		std::shared_ptr<SkipListNode> node = testList._head;
 		node = node->_forwardNodes[0];
-		while (node->_value != testList._tail->_value)
+		while (node->_key != testList._tail->_key)
 		{
-			resultInts.push_back(node->_value);
+			resultInts.push_back(node->_key);
 			node = node->_forwardNodes[0];
 		}
 		{
@@ -241,6 +282,16 @@ TEST_CASE("SkipList Removals",
 		{
 			INFO("Items are still sorted after removal.");
 			REQUIRE(resultInts == testInts);
+		}
+		{
+			INFO("_head cannot be removed.");
+			testList.remove(testList._head->_key);
+			REQUIRE(testList._head->_key == std::numeric_limits<int>::min());
+		}
+		{
+			INFO("_tail cannot be removed.");
+			testList.remove(testList._tail->_key);
+			REQUIRE(testList._tail->_key == std::numeric_limits<int>::max());
 		}
 	}
 }
